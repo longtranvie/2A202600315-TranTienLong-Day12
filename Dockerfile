@@ -1,4 +1,4 @@
-=FROM python:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -9,7 +9,6 @@ COPY app/ ./app/
 COPY utils/ ./utils/
 
 ENV PYTHONPATH=/app
-ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
