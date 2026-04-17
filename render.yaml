@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: my-production-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: AGENT_API_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: DAILY_BUDGET_USD
+        value: "10.0"

@@ -1,0 +1,19 @@
+services:
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=staging
+      - APP_NAME=Production AI Agent
+      - AGENT_API_KEY=${AGENT_API_KEY:-my-secret-key-change-me}
+      - RATE_LIMIT_PER_MINUTE=10
+      - DAILY_BUDGET_USD=10.0
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
