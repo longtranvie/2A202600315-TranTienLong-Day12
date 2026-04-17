@@ -1,31 +1,18 @@
 # ============================================================
-# Production Dockerfile - Multi-stage build, non-root user
+# Production Dockerfile - Simplified single-stage
 # ============================================================
+FROM python:3.11-slim
 
-# Stage 1: Builder
-FROM python:3.11-slim AS builder
-
-WORKDIR /build
-
-RUN apt-get update && apt-get install -y --no-install-recommends gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-
-# Stage 2: Runtime (slim, no build tools)
-FROM python:3.11-slim AS runtime
-
-# Create non-root user for security
+# Create non-root user
 RUN groupadd -r agent && useradd -r -g agent -d /app agent
 
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /home/agent/.local
+# Install dependencies system-wide
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application
 COPY app/ ./app/
 COPY utils/ ./utils/
 
@@ -33,17 +20,10 @@ RUN chown -R agent:agent /app
 
 USER agent
 
-ENV PATH=/home/agent/.local/bin:$PATH
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# Container-level health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD python -c \
-    "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" \
-    || exit 1
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
